@@ -1,0 +1,27 @@
+# Build stage
+FROM node:lts-alpine AS build-stage
+
+ARG MODE
+WORKDIR /app
+
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Copy all project files to the working directory
+COPY . .
+
+# Build the app with the specified mode
+RUN npm run build -- --mode ${MODE}
+
+# Run stage
+FROM nginx:stable-alpine AS run-stage
+
+# Copy the build output from the build stage to the NGINX HTML directory
+COPY --from=build-stage /app/dist /usr/share/nginx/html
+
+# Expose port 80 for the server
+EXPOSE 80
+
+# Start NGINX in the foreground
+CMD ["nginx", "-g", "daemon off;"]
